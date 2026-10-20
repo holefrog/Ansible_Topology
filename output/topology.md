@@ -25,7 +25,7 @@ graph TD
         D21 --- D26
         D27["TS-110<br/>192.168.50.110"]    end
     subgraph SG6["终端"]
-        D28["Pixel-10-Pro<br/>192.168.50.53"]        D29["Pixel-7-Pro<br/>192.168.50.253"]        D30["iPhone-15ProMax<br/>192.168.50.99"]        D31["android-dhcp-11<br/>192.168.50.205"]        D32["iPhone-Moneris<br/>192.168.50.227"]        D33["iPhone-XS<br/>192.168.50.103"]        D34["ThinkPad-T14<br/>192.168.50.140"]        D35["ThinkPad-X230<br/>192.168.50.230"]        D36["Home-Xiaoxin<br/>192.168.50.195"]        D37["Lenovo-Idea-T<br/>192.168.50.160"]    end
+        D28["Pixel-10-Pro<br/>192.168.50.53"]        D29["Pixel-7-Pro<br/>192.168.50.253"]        D30["iPhone-15ProMax<br/>192.168.50.99"]        D31["Pixel-2-XL<br/>192.168.50.205"]        D32["iPhone-Moneris<br/>192.168.50.227"]        D33["iPhone-XS<br/>192.168.50.103"]        D34["ThinkPad-T14<br/>192.168.50.140"]        D35["ThinkPad-X230<br/>192.168.50.230"]        D36["Home-Xiaoxin<br/>192.168.50.195"]        D37["Lenovo-Pad<br/>192.168.50.160"]    end
     subgraph SG7["网络基础设施"]
         D38["ASUS TUF Gaming BE6500<br/>192.168.50.1"]    end
     Internet --> D38

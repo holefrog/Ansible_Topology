@@ -50,13 +50,13 @@ devices:
         conn_type: 有线
         addr_type: 容器
         port: 3000
-        note: 统一服务入口（本上层项目部署，与 LMS/MariaDB 区分）
+        note: 统一服务入口
       - name: Uptime Kuma
         kind: container
         conn_type: 有线
         addr_type: 容器
         port: 3001
-        note: 可用性监控+报警（本上层项目部署）
+        note: 可用性监控+报警
 
   - name: TS-110
     group: 服务器
@@ -64,7 +64,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.110
     mac: 00:08:9b:bf:3c:fe
-    note: 有线连接；NAS；当前在线状态待确认
+    note: 有线连接；NAS；
 
   # ── 媒体 ──
   - name: ESP32-Bathroom
@@ -81,7 +81,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.114
     mac: 78:21:84:e1:19:f0
-    note: 256x64 播放器；连接 LMS；曾有播放不稳定情况
+    note: 256x64 播放器；连接 LMS；
 
   - name: ESP32-A1S
     group: 媒体
@@ -89,7 +89,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.169
     mac: c0:49:ef:bd:ad:f0
-    note: 320x240 播放器；连接 LMS；当前在线状态待确认
+    note: 320x240 播放器；连接 LMS；
 
   - name: ESP32-Kitchen
     group: 媒体
@@ -113,7 +113,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.220
     mac: 64:ff:0a:a4:97:79
-    note: Kodi 客户端，连接 MariaDB；当前在线状态待确认
+    note: Kodi 客户端，连接 MariaDB；
 
   - name: Xiaoai-X08A
     group: 媒体
@@ -121,7 +121,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.180
     mac: 8c:53:c3:ad:8f:1a
-    note: 已刷机去小爱 AI，普通 Android 终端 + Squeezelite 播放器；连接 LMS
+    note: 普通 Android 终端 + Squeezelite 播放器；连接 LMS
 
   # ── 终端：手机为随机 MAC，IP 是采集时的 DHCP 地址，不作固定绑定 ──
   - name: Pixel-10-Pro
@@ -132,7 +132,7 @@ devices:
     mac: null  # 随机 MAC
     identify_by: 主机名
     monitor: false
-    note: 手机；动态 DHCP，IP 会变化
+    note: 手机；IP 与随机 MAC 均可能变化
 
   - name: Pixel-7-Pro
     group: 终端
@@ -142,7 +142,7 @@ devices:
     mac: null  # 随机 MAC
     identify_by: 主机名
     monitor: false
-    note: 手机；动态 DHCP，IP 会变化
+    note: 手机；IP 与随机 MAC 均可能变化
 
   - name: iPhone-15ProMax
     group: 终端
@@ -152,9 +152,9 @@ devices:
     mac: null  # 随机 MAC
     identify_by: 主机名
     monitor: false
-    note: 手机；动态 DHCP，IP 会变化
+    note: 手机；IP 与随机 MAC 均可能变化
 
-  - name: android-dhcp-11
+  - name: Pixel-2-XL
     group: 终端
     conn_type: 无线
     addr_type: DHCP
@@ -162,7 +162,7 @@ devices:
     mac: null  # 随机 MAC
     identify_by: 主机名
     monitor: false
-    note: 手机；设备名称待确认；动态 DHCP，IP 会变化
+    note: 手机；IP 与随机 MAC 均可能变化
 
   - name: iPhone-Moneris
     group: 终端
@@ -172,17 +172,17 @@ devices:
     mac: null  # 随机 MAC
     identify_by: 主机名
     monitor: false
-    note: 手机；动态 DHCP，IP 会变化
+    note: 手机；IP 与随机 MAC 均可能变化
 
   - name: iPhone-XS
     group: 终端
     conn_type: 无线
     addr_type: DHCP
     ip: 192.168.50.103
-    mac: 52:34:d2:dd:03:b2  # 当前租约观测值；手机随机 MAC，可能变化
+    mac: null  # 随机 MAC
     identify_by: 主机名
     monitor: false
-    note: 手机；当前租约标记 DHCP，IP 与随机 MAC 均可能变化
+    note: 手机；IP 与随机 MAC 均可能变化
 
   - name: ThinkPad-T14
     group: 终端
@@ -198,7 +198,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.230
     mac: 84:14:4d:da:0a:f2
-    note: 电脑，当前在线状态待确认
+    note: 电脑，
 
   - name: Home-Xiaoxin
     group: 终端
@@ -247,7 +247,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.246
     mac: 40:31:3c:b0:78:3f
-    note: 智能灯
+    note: 小米台灯
 
   - name: garage-opener
     group: IoT
@@ -263,7 +263,7 @@ devices:
     addr_type: 静态
     ip: 192.168.50.187
     mac: 4c:11:ae:11:3a:70
-    note: 设备用途待确认
+    note: 背光相框
 
   # ── 安防 ──
   - name: Camera_Mi_F2
