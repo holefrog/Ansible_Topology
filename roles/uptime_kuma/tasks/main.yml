@@ -11,8 +11,8 @@
     image: "{{ kuma_image }}"
     state: started
     restart_policy: unless-stopped
-    ports:
-      - "{{ kuma_port }}:3001"
+    network_mode: host
+    ports: []
     volumes:
       - "{{ kuma_data_dir }}:/app/data"
 

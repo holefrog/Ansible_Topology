@@ -19,7 +19,7 @@ secrets.yml               # 密码（git 排除，见下）
 apply.sh                  # 交互式部署入口，按选项调用 site.yml playbook
 roles/
   homepage/               # 统一服务入口 :3000（渲染 services.yaml.j2 → 起容器）
-  uptime_kuma/            # 可用性监控 :3001（第一版监控项手动建）
+  uptime_kuma/            # 可用性监控 :3001（host 网络，监控项由代码幂等创建）
   topology/               # 渲染 topology.mmd.j2 → output/topology.md（推 GitHub 成图）
 ```
 
@@ -73,6 +73,8 @@ QNAP SSH 端口使用 `51000`；`inventory/hosts.yml` 会把上述凭据映射�
 3. `git add output/topology.md && git commit -m "update" && git push`（GitHub 自动成图）
 
 ## Kuma 监控项（代码建，幂等）
+
+Uptime Kuma 使用 Docker `host` 网络模式，直接使用 QNAP 的网络栈；访问 QNAP 局域网地址时不依赖容器到宿主机的端口转发。Kuma Web UI 仍通过 `http://192.168.50.210:3001` 访问。host 模式下不配置 Docker 端口映射。
 
 `roles/uptime_kuma/defaults/main.yml` 里的 `kuma_monitors` 清单，部署 Kuma 时调 API 自动建，已存在的按名字跳过：
 
