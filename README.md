@@ -58,6 +58,8 @@ ansible-playbook check_status.yml -e @secrets.yml          # 检查容器与服�
 ```yaml
 qnap_ssh_user: "你的 QNAP SSH 用户"
 qnap_ssh_password: "你的 QNAP SSH 密码"
+kuma_admin_user: "admin"       # Kuma 首次打开 :3001 时创建的管理员账号
+kuma_admin_password: "xxxx"
 ```
 
 QNAP SSH 端口使用 `51000`；`inventory/hosts.yml` 会把上述凭据映射到 Ansible SSH 连接变量。
@@ -70,7 +72,9 @@ QNAP SSH 端口使用 `51000`；`inventory/hosts.yml` 会把上述凭据映射�
 2. 运行 `./apply.sh`，选择部署选项；若只改拓扑则选择 5
 3. `git add output/topology.md && git commit -m "update" && git push`（GitHub 自动成图）
 
-## Kuma 监控项（第一版手动建）
+## Kuma 监控项（代码建，幂等）
+
+`roles/uptime_kuma/defaults/main.yml` 里的 `kuma_monitors` 清单，部署 Kuma 时调 API 自动建，已存在的按名字跳过：
 
 | 目标 | 类型 | 地址 |
 | --- | --- | --- |
@@ -78,5 +82,7 @@ QNAP SSH 端口使用 `51000`；`inventory/hosts.yml` 会把上述凭据映射�
 | Home Assistant | HTTP | 192.168.50.236:8123 |
 | MariaDB | TCP | 192.168.50.210:3306 |
 | 路由器 / QNAP / HA | Ping | .1 / .210 / .236 |
+
+加监控：往 `kuma_monitors` 加一行，重跑部署（`./apply.sh` 选 3，或 `ansible-playbook site.yml -e @secrets.yml --tags kuma-monitors`）。
 
 手机（Pixel/iPhone）不进监控：休眠断 Wi-Fi 会误报。

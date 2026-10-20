@@ -14,7 +14,7 @@
 - `inventory/hosts.yml` — 本项目的主机 inventory
 - `vars/topology.yml` — **唯一的设备清单**（真相源），见下
 - `roles/homepage` — 部署 homepage 容器 + 从 topology.yml 渲染 services.yaml
-- `roles/uptime_kuma` — 部署 kuma 容器（监控项第一版手动建，API 自动建以后再说）
+- `roles/uptime_kuma` — 部署 kuma 容器 + 调 Kuma API 自动建监控项（`tasks/monitors.yml`，幂等；账号密码走 secrets.yml）
 - `roles/topology` — 从 topology.yml 渲染 topology.mmd，推 Git 后 GitHub 自动成图
 - `secrets.yml` — 路由器/QNAP 账号密码，**永不提交**（见 .gitignore）
 - `keys/` — 放 SSH 私钥（如 `keys/asus_be6500`），**永不提交**（见 .gitignore）；公钥 `.pub` 可随仓库走

@@ -15,3 +15,7 @@
       - "{{ kuma_port }}:3001"
     volumes:
       - "{{ kuma_data_dir }}:/app/data"
+
+- name: 创建 Kuma 监控项（调 API，幂等）
+  ansible.builtin.import_tasks: monitors.yml
+  tags: kuma-monitors

@@ -3,3 +3,36 @@
 kuma_image: louislam/uptime-kuma:2
 kuma_port: 3001
 kuma_data_dir: /share/Container/uptime-kuma/data
+
+# Kuma API 地址（脚本在本机跑，直连 QNAP 上的 Kuma）
+kuma_api_url: "http://{{ ansible_host }}:{{ kuma_port }}"
+
+# Kuma 管理员账号：在 secrets.yml 里填（首次打开 :3001 网页时创建的那个账号）
+# kuma_admin_user: admin
+# kuma_admin_password: "xxxx"
+
+# 监控检查间隔（秒）与重试次数：失败 N 次后才报警，避免偶发抖动误报
+kuma_monitor_interval: 60
+kuma_monitor_maxretries: 3
+
+# 监控清单：名字是唯一键，重跑 playbook 时已存在的按名字跳过，不会重复建
+kuma_monitors:
+  - name: LMS
+    type: http
+    url: http://192.168.50.210:9000
+  - name: Home Assistant
+    type: http
+    url: http://192.168.50.236:8123
+  - name: MariaDB
+    type: port
+    hostname: 192.168.50.210
+    port: 3306
+  - name: 路由器
+    type: ping
+    hostname: 192.168.50.1
+  - name: QNAP
+    type: ping
+    hostname: 192.168.50.210
+  - name: HA 主机
+    type: ping
+    hostname: 192.168.50.236

@@ -12,6 +12,7 @@ inventory/*
 !inventory/*.example
 *key
 *key.pub
+keys/*
 
 
 # 密码和凭证

@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""由 Ansible 渲染并执行：幂等地创建 Kuma 监控项。
+已存在的监控按名字跳过，不会重复建。临时脚本，执行完即删。
+依赖：pip install uptime-kuma-api-ng（支持 Kuma 1.x/2.x）。
+"""
+import sys
+from uptime_kuma_api import UptimeKumaApi, MonitorType
+
+TYPE_MAP = {
+    "http": MonitorType.HTTP,
+    "port": MonitorType.PORT,
+    "ping": MonitorType.PING,
+}
+
+MONITORS = {{ kuma_monitors | to_json }}
+
+
+def main():
+    with UptimeKumaApi("{{ kuma_api_url }}") as api:
+        api.login("{{ kuma_admin_user }}", "{{ kuma_admin_password }}")
+
+        raw = api.get_monitors()
+        if isinstance(raw, dict):
+            existing = {m["name"] for m in raw.values()}
+        else:
+            existing = {m["name"] for m in raw}
+
+        for mon in MONITORS:
+            name = mon["name"]
+            if name in existing:
+                print(f"SKIP 已存在: {name}")
+                continue
+            kwargs = dict(
+                type=TYPE_MAP[mon["type"]],
+                name=name,
+                interval={{ kuma_monitor_interval }},
+                maxretries={{ kuma_monitor_maxretries }},
+            )
+            if mon["type"] == "http":
+                kwargs["url"] = mon["url"]
+            elif mon["type"] == "port":
+                kwargs["hostname"] = mon["hostname"]
+                kwargs["port"] = mon["port"]
+            else:  # ping
+                kwargs["hostname"] = mon["hostname"]
+            result = api.add_monitor(**kwargs)
+            print(f"OK 已创建: {name} -> {result}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:  # noqa: BLE001 - 报错直接抛给 Ansible 看
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)

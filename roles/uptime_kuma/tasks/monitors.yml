@@ -1,4 +1,47 @@
 ---
-# Kuma 监控项：第一版手动在网页上建（6 个：LMS :9000、HA :8123、
-# MariaDB :3306、路由器/QNAP/HA 的 ping），以后再改成调 Kuma API 自动建。
-# 占位文件，保持为空。
+# Kuma 监控项：调 Kuma API 自动建，幂等（已存在的按名字跳过）。
+# 前提：已在 :3001 网页建好管理员账号，并把账号密码填进 secrets.yml
+# （kuma_admin_user / kuma_admin_password）。
+# 单独跑：ansible-playbook site.yml -e @secrets.yml --tags kuma-monitors
+# 或 ./apply.sh 选 3（Kuma 部署会连带跑监控）
+
+- name: 检查 Kuma 管理员账号已配置
+  ansible.builtin.assert:
+    that:
+      - kuma_admin_user is defined
+      - kuma_admin_password is defined
+    fail_msg: "secrets.yml 里缺 kuma_admin_user / kuma_admin_password（Kuma 首次打开 :3001 时创建的管理员账号）"
+  delegate_to: localhost
+  run_once: true
+
+- name: 安装 uptime-kuma-api-ng（本机，支持 Kuma 1.x/2.x）
+  ansible.builtin.pip:
+    name: uptime-kuma-api-ng
+    state: present
+  delegate_to: localhost
+
+- name: 等待 Kuma 就绪
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ kuma_port }}"
+    timeout: 120
+  delegate_to: localhost
+
+- name: 渲染建监控脚本（本机临时文件）
+  ansible.builtin.template:
+    src: create_monitors.py.j2
+    dest: /tmp/ansible_kuma_monitors.py
+    mode: "0600"
+  delegate_to: localhost
+
+- name: 执行建监控脚本
+  ansible.builtin.command: python3 /tmp/ansible_kuma_monitors.py
+  delegate_to: localhost
+  register: kuma_monitors_result
+  changed_when: "'OK 已创建' in kuma_monitors_result.stdout"
+
+- name: 删除临时脚本（含账号密码，不留痕）
+  ansible.builtin.file:
+    path: /tmp/ansible_kuma_monitors.py
+    state: absent
+  delegate_to: localhost
