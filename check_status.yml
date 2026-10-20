@@ -35,19 +35,9 @@
     - name: 显示 QNAP 数据目录状态
       ansible.builtin.debug:
         msg: >-
-          {{
-            topology_dirs.results
-            | map(attribute='stat')
-            | map('extract', ['exists', 'path'])
-            | default([], true)
-          }}
-      vars:
-        dir_summary: >-
-          {{
-            topology_dirs.results
-            | map(attribute='item')
-            | list
-          }}
+          {{ item.stat.path }}:
+          {{ '存在' if item.stat.exists else '不存在' }}
+      loop: "{{ topology_dirs.results }}"
 
 - name: 检查服务网络连通性与本地拓扑文件（本机）
   hosts: localhost
