@@ -14,11 +14,14 @@
   delegate_to: localhost
   run_once: true
 
-- name: 安装 uptime-kuma-api-ng（本机，支持 Kuma 1.x/2.x）
+- name: 安装 uptime-kuma-api-ng（本机虚拟环境，支持 Kuma 1.x/2.x）
   ansible.builtin.pip:
     name: uptime-kuma-api-ng
     state: present
+    virtualenv: "{{ playbook_dir }}/.venv"
+    virtualenv_command: "python3 -m venv"
   delegate_to: localhost
+  run_once: true
 
 - name: 等待 Kuma 就绪
   ansible.builtin.wait_for:
@@ -35,7 +38,7 @@
   delegate_to: localhost
 
 - name: 执行建监控脚本
-  ansible.builtin.command: python3 /tmp/ansible_kuma_monitors.py
+  ansible.builtin.command: "{{ playbook_dir }}/.venv/bin/python3 /tmp/ansible_kuma_monitors.py"
   delegate_to: localhost
   register: kuma_monitors_result
   changed_when: "'OK 已创建' in kuma_monitors_result.stdout"
