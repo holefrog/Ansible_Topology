@@ -208,7 +208,7 @@ devices:
     mac: 70:a6:cc:76:45:fd
     note: 电脑
 
-  - name: Lenovo-Idea-T
+  - name: Lenovo-Pad
     group: 终端
     conn_type: 无线
     addr_type: 静态
