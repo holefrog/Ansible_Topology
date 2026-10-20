@@ -3,6 +3,8 @@
 kuma_image: louislam/uptime-kuma:2
 kuma_port: 3001
 kuma_data_dir: /share/Container/uptime-kuma/data
+kuma_memory_limit: 512M
+kuma_cpus_limit: 0.5
 
 # Kuma API 地址（脚本在本机跑，直连 QNAP 上的 Kuma）
 kuma_api_url: "http://{{ ansible_host }}:{{ kuma_port }}"

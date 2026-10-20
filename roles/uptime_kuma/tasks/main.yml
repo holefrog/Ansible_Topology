@@ -11,6 +11,8 @@
     image: "{{ kuma_image }}"
     state: started
     restart_policy: unless-stopped
+    memory: "{{ kuma_memory_limit }}"
+    cpus: "{{ kuma_cpus_limit }}"
     network_mode: host
     ports: []
     volumes:

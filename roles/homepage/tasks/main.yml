@@ -18,6 +18,8 @@
     image: "{{ homepage_image }}"
     state: started
     restart_policy: unless-stopped
+    memory: "{{ homepage_memory_limit }}"
+    cpus: "{{ homepage_cpus_limit }}"
     ports:
       - "{{ homepage_port }}:3000"
     volumes:

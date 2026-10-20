@@ -66,6 +66,8 @@ QNAP SSH 端口使用 `51000`；`inventory/hosts.yml` 会把上述凭据映射�
 
 验证：打开 `http://192.168.50.210:3000`（Homepage）、`http://192.168.50.210:3001`（Kuma，首次打开设账号密码）。
 
+容器 CPU/内存限制、配置变量及生效后的检查方法见[容器资源限制技术说明](documents/container-resource-limits.md)。
+
 ## 日常：加/改设备
 
 1. 改 `vars/topology.yml`（只改这一个文件）
