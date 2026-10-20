@@ -1,0 +1,32 @@
+```mermaid
+# 本文件由 vars/topology.yml 自动渲染，请勿手改
+# 渲染命令：ansible-playbook site.yml --tags topology
+# 输出为 Markdown（含 mermaid 代码块），推到 GitHub 后自动成图
+graph TD
+    Internet([Internet<br/>外网入口])
+{% set ns = namespace(i=0, router='', qnap='') %}
+{% for group in devices | groupby('group') %}
+    subgraph SG{{ loop.index }}["{{ group.grouper }}{% if group.grouper == '云端' %} · Phase 2{% endif %}"]
+{% for d in group.list %}
+{% set ns.i = ns.i + 1 %}{% set pid = 'D' ~ ns.i %}
+{% if group.grouper == '网络基础设施' and loop.first %}{% set ns.router = pid %}{% endif %}
+{% if 'QNAP' in d.name %}{% set ns.qnap = pid %}{% endif %}
+        {{ pid }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% elif d.get('monitor') is not none and not d.get('monitor') %}<br/>动态{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
+{% if d.get('children') %}
+{% for c in d.children %}
+{% set ns.i = ns.i + 1 %}
+        D{{ ns.i }}["{{ c.name }}{% if c.get('port') %}<br/>:{{ c.get('port') }}{% endif %}"]
+        {{ pid }} --- D{{ ns.i }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+    end
+{% endfor %}
+{% if ns.router %}
+    Internet --> {{ ns.router }}
+{% endif %}
+{% if ns.router and ns.qnap %}
+    {{ ns.router }} --> {{ ns.qnap }}
+{% endif %}
+    classDef warn fill:#fef2f2,stroke:#ef4444,color:#991b1b;
+```

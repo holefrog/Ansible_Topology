@@ -1,0 +1,65 @@
+---
+# Ansible_Topology 总入口（上层项目）
+#
+# 全量跑：  ansible-playbook site.yml -e @secrets.yml
+# 只渲染：  ansible-playbook site.yml -e @secrets.yml --tags topology
+# 只装容器：ansible-playbook site.yml -e @secrets.yml --tags homepage,kuma
+#
+# 注意：secrets.yml 放项目根目录（gitignore 已排除），格式见 README
+
+- name: 上层 · 可视化容器（QNAP）
+  hosts: qnap
+  gather_facts: false
+  vars:
+    topology_docker_bin: /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker
+  pre_tasks:
+    - name: 检查 Container Station 的 Docker 命令是否存在
+      ansible.builtin.stat:
+        path: "{{ topology_docker_bin }}"
+      register: topology_docker_bin_stat
+      tags: [homepage, kuma, viz]
+
+    - name: 提示先安装 Container Station
+      ansible.builtin.fail:
+        msg: >-
+          QNAP 上没有找到 Docker 命令（{{ topology_docker_bin }}）。
+          请先在 QNAP App Center 安装并启动 Container Station，再运行部署。
+      when: not topology_docker_bin_stat.stat.exists
+      tags: [homepage, kuma, viz]
+
+    - name: 检查 Docker daemon 是否可用
+      ansible.builtin.command:
+        argv:
+          - "{{ topology_docker_bin }}"
+          - info
+      register: topology_docker_info
+      changed_when: false
+      failed_when: false
+      when: topology_docker_bin_stat.stat.exists
+      tags: [homepage, kuma, viz]
+
+    - name: 提示启动 Container Station 或检查 Docker 权限
+      ansible.builtin.fail:
+        msg: >-
+          Docker 命令存在，但无法连接 Docker daemon。
+          请确认 QNAP 的 Container Station 已启动，并且 Ansible 登录用户有权访问 Docker。
+          Docker 返回：{{ topology_docker_info.stderr | default(topology_docker_info.stdout, true) }}
+      when:
+        - topology_docker_bin_stat.stat.exists
+        - topology_docker_info.rc != 0
+      tags: [homepage, kuma, viz]
+
+  vars_files:
+    - vars/topology.yml  # 唯一真相源，两个模板都读它
+  roles:
+    - { role: homepage, tags: [homepage, viz] }
+    - { role: uptime_kuma, tags: [kuma, viz] }
+
+- name: 上层 · 拓扑文本渲染（本机）
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/topology.yml
+  roles:
+    - { role: topology, tags: [topology, viz] }

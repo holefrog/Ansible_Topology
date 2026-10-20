@@ -1,0 +1,324 @@
+# vars/topology.yml — 唯一的设备清单（真相源）
+# IP/MAC 来源：路由器 DHCP 租约、Manually Assigned IP 清单及在线设备表。
+# 未确认的字段保留 null 并标注待确认；手机使用随机 MAC，故不记录其 MAC。
+# group 仅使用：网络基础设施 / 服务器 / 媒体 / 终端 / IoT / 安防 / 云端
+# 本文件由 roles/homepage/templates/services.yaml.j2 和
+# roles/topology/templates/topology.mmd.j2 读取渲染，手改输出文件无效。
+
+devices:
+  # ── 网络基础设施 ──
+  - name: ASUS TUF Gaming BE6500
+    group: 网络基础设施
+    conn_type: 有线
+    addr_type: 网关
+    ip: 192.168.50.1
+    mac: cc:28:aa:5f:a0:3c  # LAN bridge br0；由路由器接口信息确认
+    note: 网关、DHCP；LAN 有线/桥接 MAC；Wi-Fi 接口另有 MAC；SSH 管理端口 22122
+
+  # ── 服务器 ──
+  - name: QNAP TS-453Bmini
+    group: 服务器
+    conn_type: 有线
+    addr_type: 静态
+    ip: 192.168.50.210
+    mac: 24:5e:be:4f:75:b1
+    note: 有线连接；NAS 与 Container Station 宿主机
+    children:
+      - name: LMS
+        kind: container
+        conn_type: 有线
+        addr_type: 容器
+        service: Lyrion
+        port: 9000
+        note: 为四台 ESP32 播放器提供服务
+      - name: MariaDB
+        kind: container
+        conn_type: 有线
+        addr_type: 容器
+        port: 3306
+        note: Kodi 共享视频库（片库及观看进度）
+      - name: Home Assistant
+        kind: vm
+        conn_type: 有线
+        addr_type: 静态
+        ip: 192.168.50.236
+        mac: 52:54:00:5f:c7:6f
+        port: 8123
+        note: Virtualization Station，bridge 模式
+      - name: Homepage
+        kind: container
+        conn_type: 有线
+        addr_type: 容器
+        port: 3000
+        note: 统一服务入口（本上层项目部署，与 LMS/MariaDB 区分）
+      - name: Uptime Kuma
+        kind: container
+        conn_type: 有线
+        addr_type: 容器
+        port: 3001
+        note: 可用性监控+报警（本上层项目部署）
+
+  - name: TS-110
+    group: 服务器
+    conn_type: 有线
+    addr_type: 静态
+    ip: 192.168.50.110
+    mac: 00:08:9b:bf:3c:fe
+    note: 有线连接；NAS；当前在线状态待确认
+
+  # ── 媒体 ──
+  - name: ESP32-Bathroom
+    group: 媒体
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.192
+    mac: 08:d1:f9:29:9f:ac
+    note: 128x64 播放器；连接 LMS
+
+  - name: ESP32-LivingRoom
+    group: 媒体
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.114
+    mac: 78:21:84:e1:19:f0
+    note: 256x64 播放器；连接 LMS；曾有播放不稳定情况
+
+  - name: ESP32-A1S
+    group: 媒体
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.169
+    mac: c0:49:ef:bd:ad:f0
+    note: 320x240 播放器；连接 LMS；当前在线状态待确认
+
+  - name: ESP32-Kitchen
+    group: 媒体
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.147
+    mac: 34:86:5d:fe:5c:9c
+    note: SqueezeESP32 播放器；连接 LMS
+
+  - name: RPI 播放器
+    group: 媒体
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.207
+    mac: dc:a6:32:40:b5:f6
+    note: Raspberry Pi，运行 Squeezelite 并连接 LMS
+
+  - name: Sony TV
+    group: 媒体
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.220
+    mac: 64:ff:0a:a4:97:79
+    note: Kodi 客户端，连接 MariaDB；当前在线状态待确认
+
+  - name: Xiaoai-X08A
+    group: 媒体
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.180
+    mac: 8c:53:c3:ad:8f:1a
+    note: 已刷机去小爱 AI，普通 Android 终端 + Squeezelite 播放器；连接 LMS
+
+  # ── 终端：手机为随机 MAC，IP 是采集时的 DHCP 地址，不作固定绑定 ──
+  - name: Pixel-10-Pro
+    group: 终端
+    conn_type: 无线
+    addr_type: DHCP
+    ip: 192.168.50.53
+    mac: null  # 随机 MAC
+    identify_by: 主机名
+    monitor: false
+    note: 手机；动态 DHCP，IP 会变化
+
+  - name: Pixel-7-Pro
+    group: 终端
+    conn_type: 无线
+    addr_type: DHCP
+    ip: 192.168.50.253
+    mac: null  # 随机 MAC
+    identify_by: 主机名
+    monitor: false
+    note: 手机；动态 DHCP，IP 会变化
+
+  - name: iPhone-15ProMax
+    group: 终端
+    conn_type: 无线
+    addr_type: DHCP
+    ip: 192.168.50.99
+    mac: null  # 随机 MAC
+    identify_by: 主机名
+    monitor: false
+    note: 手机；动态 DHCP，IP 会变化
+
+  - name: android-dhcp-11
+    group: 终端
+    conn_type: 无线
+    addr_type: DHCP
+    ip: 192.168.50.205
+    mac: null  # 随机 MAC
+    identify_by: 主机名
+    monitor: false
+    note: 手机；设备名称待确认；动态 DHCP，IP 会变化
+
+  - name: iPhone-Moneris
+    group: 终端
+    conn_type: 无线
+    addr_type: DHCP
+    ip: 192.168.50.227
+    mac: null  # 随机 MAC
+    identify_by: 主机名
+    monitor: false
+    note: 手机；动态 DHCP，IP 会变化
+
+  - name: iPhone-XS
+    group: 终端
+    conn_type: 无线
+    addr_type: DHCP
+    ip: 192.168.50.103
+    mac: 52:34:d2:dd:03:b2  # 当前租约观测值；手机随机 MAC，可能变化
+    identify_by: 主机名
+    monitor: false
+    note: 手机；当前租约标记 DHCP，IP 与随机 MAC 均可能变化
+
+  - name: ThinkPad-T14
+    group: 终端
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.140
+    mac: d8:80:83:3f:e2:23
+    note: 电脑
+
+  - name: ThinkPad-X230
+    group: 终端
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.230
+    mac: 84:14:4d:da:0a:f2
+    note: 电脑，当前在线状态待确认
+
+  - name: Home-Xiaoxin
+    group: 终端
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.195
+    mac: 70:a6:cc:76:45:fd
+    note: 电脑
+
+  - name: Lenovo-Idea-T
+    group: 终端
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.160
+    mac: 9a:46:a7:43:20:bd
+    note: 平板
+
+  # ── IoT ──
+  - name: Lumi-Gateway-Floor-1
+    group: IoT
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.101
+    mac: 7c:49:eb:92:4b:d7
+    note: 绿米网关，已刷固件为 Zigbee 网关
+
+  - name: Lumi-Gateway-Floor-2
+    group: IoT
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.201
+    mac: 7c:49:eb:93:b0:68
+    note: 绿米网关，已刷固件为 Zigbee 网关
+
+  - name: HoneyWell
+    group: IoT
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.193
+    mac: 48:a2:e6:47:98:39
+    note: Honeywell温控器
+
+  - name: bedside-lamp
+    group: IoT
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.246
+    mac: 40:31:3c:b0:78:3f
+    note: 智能灯
+
+  - name: garage-opener
+    group: IoT
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.221
+    mac: e8:db:84:9f:0b:77
+    note: 车库开门器
+
+  - name: backlit-frame
+    group: IoT
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.187
+    mac: 4c:11:ae:11:3a:70
+    note: 设备用途待确认
+
+  # ── 安防 ──
+  - name: Camera_Mi_F2
+    group: 安防
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.26
+    mac: 04:cf:8c:00:54:08
+    note: 摄像头
+
+  - name: Camera-Lumi-Backyard
+    group: 安防
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.52
+    mac: 50:ec:50:54:5d:14
+    note: 摄像头
+
+  - name: ReoLink-DoorBell
+    group: 安防
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.86
+    mac: cc:e5:36:07:3a:df
+    note: 门铃摄像头
+
+  - name: stair-closet-camera
+    group: 安防
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.109
+    mac: 30:ae:a4:5d:8b:ec
+    note: 摄像头
+
+  - name: Camera_Mi_F1
+    group: 安防
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.143
+    mac: 04:cf:8c:00:8a:20
+    note: 摄像头
+
+  - name: Camera-Lumi-Garage
+    group: 安防
+    conn_type: 无线
+    addr_type: 静态
+    ip: 192.168.50.213
+    mac: 50:ec:50:54:41:ad
+    note: 摄像头
+
+  # ── 云端（Phase 2）──
+  - name: VPS
+    group: 云端
+    conn_type: 云端
+    addr_type: 云端
+    ip: null  # Phase 2 从 Ansible inventory 取：GCP×2 + RackNerd + Oracle
+    mac: null
+    note: 反代服务；Phase 2 并入

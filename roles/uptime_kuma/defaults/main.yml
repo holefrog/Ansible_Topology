@@ -1,0 +1,5 @@
+---
+# Uptime Kuma 默认变量（可在 host_vars/group_vars 覆盖）
+kuma_image: louislam/uptime-kuma:2
+kuma_port: 3001
+kuma_data_dir: /share/Container/uptime-kuma/data

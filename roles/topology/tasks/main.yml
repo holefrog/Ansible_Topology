@@ -1,0 +1,12 @@
+---
+- name: 创建拓扑输出目录（本机）
+  ansible.builtin.file:
+    path: "{{ topology_output_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: 渲染 Mermaid 拓扑文本（数据源自 vars/topology.yml）
+  ansible.builtin.template:
+    src: topology.mmd.j2
+    dest: "{{ topology_output_dir }}/topology.md"
+    mode: "0644"

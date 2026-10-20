@@ -1,0 +1,26 @@
+---
+- name: 创建 Homepage 配置目录
+  ansible.builtin.file:
+    path: "{{ homepage_config_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: 渲染 Homepage services.yaml（数据源自 vars/topology.yml）
+  ansible.builtin.template:
+    src: services.yaml.j2
+    dest: "{{ homepage_config_dir }}/services.yaml"
+    mode: "0644"
+  notify: 重启 homepage
+
+- name: 部署 Homepage 容器
+  community.docker.docker_container:
+    name: homepage
+    image: "{{ homepage_image }}"
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ homepage_port }}:3000"
+    volumes:
+      - "{{ homepage_config_dir }}:/app/config"
+    env:
+      HOMEPAGE_ALLOWED_HOSTS: "{{ homepage_allowed_hosts }}"

@@ -1,0 +1,43 @@
+---
+# 本文件由 vars/topology.yml 自动渲染，请勿手改
+# 渲染命令：ansible-playbook site.yml --tags homepage
+{% for group in devices | groupby('group') %}
+- {{ group.grouper }}:
+{% for d in group.list %}
+    - {{ d.name }}:
+{% if d.get('monitor', true) and d.get('ip') %}
+        href: http://{{ d.ip }}{{ (':' ~ d.get('port')) if d.get('port') else '' }}
+        ping: {{ d.ip }}
+{% endif %}
+{% set d_port = (':' ~ d.get('port')) if d.get('port') else '' %}
+{% set d_addr = (d.get('ip') ~ d_port) if d.get('ip') else '' %}
+{% set d_info_list = [d.get('conn_type'), d.get('addr_type'), d_addr] | reject('none') | reject('equalto', '') | list %}
+{% set d_info = d_info_list | join('-') %}
+{% set d_note = (' [' ~ d.note ~ ']') if d.get('note') else '' %}
+{% set d_desc = (d_info ~ d_note) if d_info else d.get('note', '') %}
+{% if d_desc %}
+        description: "{{ d_desc | trim }}"
+{% endif %}
+{% if d.get('children') %}
+{% for c in d.children %}
+    - {{ d.name }} / {{ c.name }}:
+{% set cip = c.get('ip') or d.get('ip') %}
+{% set cport = (':' ~ c.get('port')) if c.get('port') else '' %}
+{% if cip %}
+        href: http://{{ cip }}{{ cport }}
+        ping: {{ cip }}
+{% endif %}
+{% set c_addr = (cip ~ cport) if cip else '' %}
+{% set c_conn = c.get('conn_type') or d.get('conn_type') or '有线' %}
+{% set c_type = c.get('addr_type') or ('静态' if c.get('kind') == 'vm' else '容器') %}
+{% set c_info_list = [c_conn, c_type, c_addr] | reject('none') | reject('equalto', '') | list %}
+{% set c_info = c_info_list | join('-') %}
+{% set c_note = (' [' ~ c.note ~ ']') if c.get('note') else '' %}
+{% set c_desc = (c_info ~ c_note) if c_info else c.get('note', '') %}
+{% if c_desc %}
+        description: "{{ c_desc | trim }}"
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endfor %}
