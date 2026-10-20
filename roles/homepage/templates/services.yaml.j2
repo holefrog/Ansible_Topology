@@ -1,7 +1,9 @@
 ---
 # 本文件由 vars/topology.yml 自动渲染，请勿手改
 # 渲染命令：ansible-playbook site.yml --tags homepage
-{% for group in devices | groupby('group') %}
+{% set groups = devices | groupby('group') %}
+{% set ordered_groups = (groups | rejectattr('grouper', 'equalto', '云端') | list) + (groups | selectattr('grouper', 'equalto', '云端') | list) %}
+{% for group in ordered_groups %}
 - {{ group.grouper }}:
 {% for d in group.list %}
     - {{ d.name }}:

@@ -36,3 +36,9 @@ kuma_monitors:
   - name: HA 主机
     type: ping
     hostname: 192.168.50.236
+  - name: ESP32-Livingroom
+    type: ping
+    hostname: 192.168.50.114
+  - name: ESP32-Bathroom
+    type: ping
+    hostname: 192.168.50.192
