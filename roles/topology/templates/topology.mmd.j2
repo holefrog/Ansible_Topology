@@ -24,6 +24,7 @@ flowchart TD
 {% set ns.i = ns.i + 1 %}{% set pid = 'D' ~ ns.i %}
 {% if 'QNAP' in d.name %}{% set ns.qnap_id = pid %}{% endif %}
             {{ pid }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
+
 {% if d.get('children') %}
 {% for c in d.children %}
 {% set ns.i = ns.i + 1 %}
@@ -64,6 +65,7 @@ flowchart TD
 {% set ns.i = ns.i + 1 %}{% set cur_id = 'D' ~ ns.i %}
 {% set _ = dev_ids.append(cur_id) %}
             {{ cur_id }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% elif d.get('monitor') is not none and not d.get('monitor') %}<br/>动态{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
+
 {% endfor %}
 {% set rows = dev_ids | batch(col_limit) | list %}
 {% for r in rows %}
