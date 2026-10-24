@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""由 Ansible 渲染并执行：幂等地创建 Kuma 监控项。
-已存在的监控按名字跳过，不会重复建。临时脚本，执行完即删。
+"""由 Ansible 渲染并执行：从 vars/topology.yml 幂等地同步 Kuma 监控项。
+自动生成带 IP 的名称与 Markdown 详细描述卡片（含链接、MAC、备注），并自动归入分组。
 依赖：pip install uptime-kuma-api-ng（支持 Kuma 1.x/2.x）。
 """
 import sys
@@ -10,61 +10,223 @@ TYPE_MAP = {
     "http": MonitorType.HTTP,
     "port": MonitorType.PORT,
     "ping": MonitorType.PING,
+    "group": MonitorType.GROUP,
 }
 
-MONITORS = {{ kuma_monitors | to_json }}
+DEVICES = {{ devices | to_json }}
+
+GROUP_MAP = {
+    "网络基础设施": "网络与服务器",
+    "服务器": "网络与服务器",
+    "IoT": "IoT 设备",
+    "安防": "安防监控",
+    "媒体": "媒体设备",
+    "终端": "终端设备",
+}
+
+
+def build_target_monitors():
+    targets = []
+    for d in DEVICES:
+        if d.get("monitor") is False or not d.get("ip"):
+            continue
+
+        ip = d["ip"]
+        name = d["name"]
+        mac = d.get("mac")
+        note = d.get("note", "")
+        conn = d.get("conn_type", "")
+        addr = d.get("addr_type", "")
+        grp = GROUP_MAP.get(d.get("group"), "其他")
+
+        desc_lines = []
+        type_info = f"{conn} · {addr}".strip(" ·")
+        if type_info:
+            desc_lines.append(f"- **类型**: {type_info}")
+        if mac:
+            desc_lines.append(f"- **MAC**: `{mac}`")
+        if note:
+            desc_lines.append(f"- **备注**: {note}")
+
+        link = None
+        if name == "ASUS TUF Gaming BE6500":
+            link = f"http://{ip}"
+            dname = f"路由器 ({ip})"
+            aliases = ["路由器", "ASUS TUF Gaming BE6500", dname]
+        elif name == "QNAP TS-453Bmini":
+            link = f"http://{ip}:8080"
+            dname = f"QNAP ({ip})"
+            aliases = ["QNAP", "QNAP TS-453Bmini", dname]
+        elif name == "TS-110":
+            link = f"http://{ip}:8080"
+            dname = f"TS-110 ({ip})"
+            aliases = ["TS-110", dname]
+        elif "Camera" in name or "DoorBell" in name:
+            link = f"http://{ip}"
+            dname = f"{name} ({ip})"
+            aliases = [name, dname]
+        elif "ESP32" in name:
+            link = f"http://{ip}"
+            dname = f"{name} ({ip})"
+            aliases = [name, dname]
+        else:
+            dname = f"{name} ({ip})"
+            aliases = [name, dname]
+
+        if link:
+            desc_lines.append(f"- [🔗 打开设备管理/控制后台]({link})")
+
+        targets.append({
+            "name": dname,
+            "aliases": aliases,
+            "type": "ping",
+            "hostname": ip,
+            "group": grp,
+            "description": "\n".join(desc_lines),
+        })
+
+        if d.get("children"):
+            for c in d["children"]:
+                cname = c["name"]
+                cport = c.get("port")
+                cip = c.get("ip") or ip
+                c_desc = []
+                cconn = c.get("conn_type") or conn
+                caddr = c.get("addr_type") or "容器"
+                c_type_info = f"{cconn} · {caddr}".strip(" ·")
+                if c_type_info:
+                    c_desc.append(f"- **类型**: {c_type_info}")
+                if c.get("mac"):
+                    c_desc.append(f"- **MAC**: `{c['mac']}`")
+                if c.get("service"):
+                    c_desc.append(f"- **服务**: {c['service']}")
+                if c.get("note"):
+                    c_desc.append(f"- **备注**: {c['note']}")
+
+                if cname == "LMS":
+                    c_desc.append(f"- [🔗 打开 LMS 音乐控制台](http://{cip}:{cport})")
+                    targets.append({
+                        "name": f"LMS ({cip}:{cport})",
+                        "aliases": ["LMS", f"LMS ({cip}:{cport})"],
+                        "type": "http",
+                        "url": f"http://{cip}:{cport}",
+                        "group": grp,
+                        "description": "\n".join(c_desc),
+                    })
+                elif cname == "MariaDB":
+                    targets.append({
+                        "name": f"MariaDB ({cip}:{cport})",
+                        "aliases": ["MariaDB", f"MariaDB ({cip}:{cport})"],
+                        "type": "port",
+                        "hostname": cip,
+                        "port": cport,
+                        "group": grp,
+                        "description": "\n".join(c_desc),
+                    })
+                elif cname == "Home Assistant":
+                    c_desc.append(f"- [🔗 打开 Home Assistant 控制台](http://{cip}:{cport})")
+                    targets.append({
+                        "name": f"Home Assistant ({cip}:{cport})",
+                        "aliases": ["Home Assistant", f"Home Assistant ({cip}:{cport})"],
+                        "type": "http",
+                        "url": f"http://{cip}:{cport}",
+                        "group": grp,
+                        "description": "\n".join(c_desc),
+                    })
+                    ha_desc = f"- **类型**: 有线 · 静态 (VM Bridge 模式)\n- **MAC**: `{c.get('mac')}`\n- **备注**: Virtualization Station，bridge 模式"
+                    targets.append({
+                        "name": f"HA 主机 ({cip})",
+                        "aliases": ["HA 主机", f"HA 主机 ({cip})"],
+                        "type": "ping",
+                        "hostname": cip,
+                        "group": grp,
+                        "description": ha_desc,
+                    })
+    return targets
 
 
 def main():
+    targets = build_target_monitors()
+
     with UptimeKumaApi("{{ kuma_api_url }}") as api:
         api.login("{{ kuma_admin_user }}", "{{ kuma_admin_password }}")
 
         raw = api.get_monitors()
-        if isinstance(raw, dict):
-            existing = {m["name"]: m for m in raw.values()}
-        else:
-            existing = {m["name"]: m for m in raw}
+        existing = {m["id"]: m for m in (raw.values() if isinstance(raw, dict) else raw)}
 
-        # 1. 提取所有需要的 Group 并确保存在
+        # 1. 确保所有分组（Group）存在
         group_id_map = {}
-        for m in MONITORS:
-            grp_name = m.get("group")
-            if grp_name and grp_name not in group_id_map:
-                if grp_name in existing:
-                    group_id_map[grp_name] = existing[grp_name]["id"]
-                else:
-                    res = api.add_monitor(
-                        type=MonitorType.GROUP,
-                        name=grp_name,
-                    )
-                    gid = res["monitorID"]
-                    group_id_map[grp_name] = gid
-                    existing[grp_name] = {"id": gid, "name": grp_name, "type": "group"}
-                    print(f"OK 已创建分组: {grp_name} (ID: {gid})")
+        for m in existing.values():
+            if m["type"] == MonitorType.GROUP:
+                group_id_map[m["name"]] = m["id"]
 
-        # 2. 遍历监控项：创建或移动所属分组
-        for mon in MONITORS:
-            name = mon["name"]
+        for mon in targets:
+            grp_name = mon.get("group")
+            if grp_name and grp_name not in group_id_map:
+                res = api.add_monitor(
+                    type=MonitorType.GROUP,
+                    name=grp_name,
+                )
+                gid = res["monitorID"]
+                group_id_map[grp_name] = gid
+                existing[gid] = {"id": gid, "name": grp_name, "type": MonitorType.GROUP}
+                print(f"OK 已创建分组: {grp_name} (ID: {gid})")
+
+        # 2. 遍历监控项：匹配已有监控项并更新名称/描述/分组，或创建新监控项
+        matched_ids = set()
+
+        for mon in targets:
+            target_name = mon["name"]
             grp_name = mon.get("group")
             target_parent = group_id_map.get(grp_name) if grp_name else None
+            target_desc = mon.get("description", "")
 
-            if name in existing:
-                curr = existing[name]
-                curr_parent = curr.get("parent")
-                # 如果已存在但分组不一致，移入目标分组
+            # 寻找最佳匹配（按名称、别名、IP或URL）
+            match = None
+            for mid, m in existing.items():
+                if mid in matched_ids or m["type"] == MonitorType.GROUP:
+                    continue
+                m_name = m["name"]
+                if any(m_name.lower() == a.lower() for a in mon.get("aliases", [])):
+                    match = m
+                    break
+                if mon.get("hostname") and m.get("hostname") == mon.get("hostname") and m["type"] == TYPE_MAP[mon["type"]]:
+                    match = m
+                    break
+                if mon.get("url") and m.get("url") == mon.get("url"):
+                    match = m
+                    break
+
+            if match:
+                matched_ids.add(match["id"])
+                curr_id = match["id"]
+                curr_name = match.get("name")
+                curr_parent = match.get("parent")
+                curr_desc = match.get("description", "")
+
+                updates = {}
+                if curr_name != target_name:
+                    updates["name"] = target_name
                 if target_parent is not None and curr_parent != target_parent:
-                    api.edit_monitor(curr["id"], parent=target_parent)
-                    curr["parent"] = target_parent
-                    print(f"OK 已归类: {name} -> 移入分组 [{grp_name}]")
+                    updates["parent"] = target_parent
+                if curr_desc != target_desc:
+                    updates["description"] = target_desc
+
+                if updates:
+                    api.edit_monitor(curr_id, **updates)
+                    match.update(updates)
+                    print(f"OK 已更新: {target_name} -> {list(updates.keys())}")
                 else:
-                    print(f"SKIP 已存在: {name}")
+                    print(f"SKIP 已存在: {target_name}")
                 continue
 
+            # 未匹配到，新建监控项
             kwargs = dict(
                 type=TYPE_MAP[mon["type"]],
-                name=name,
+                name=target_name,
                 interval={{ kuma_monitor_interval }},
                 maxretries={{ kuma_monitor_maxretries }},
+                description=target_desc,
             )
             if target_parent is not None:
                 kwargs["parent"] = target_parent
@@ -76,13 +238,16 @@ def main():
                 kwargs["port"] = mon["port"]
             else:  # ping
                 kwargs["hostname"] = mon["hostname"]
+
             result = api.add_monitor(**kwargs)
-            print(f"OK 已创建: {name} -> {result}")
+            new_id = result.get("monitorID")
+            matched_ids.add(new_id)
+            print(f"OK 已创建: {target_name} (ID: {new_id})")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:  # noqa: BLE001 - 报错直接抛给 Ansible 看
+    except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
