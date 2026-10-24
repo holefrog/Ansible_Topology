@@ -5,15 +5,20 @@
 -->
 
 ```mermaid
-graph TD
+flowchart TD
     Internet([Internet<br/>外网入口])
-{% set ns = namespace(i=0, router='', qnap='') %}
-{% for group in devices | groupby('group') %}
+{% set ns = namespace(i=0, router='', qnap='', sg_count=0) %}
+{% set group_order = ['网络基础设施', '服务器', '安防', 'IoT', '媒体', '终端', '云端'] %}
+{% for gname in group_order %}
+{% set glist = devices | selectattr('group', 'equalto', gname) | list %}
+{% if glist | length > 0 %}
+{% set ns.sg_count = ns.sg_count + 1 %}
 
-    subgraph SG{{ loop.index }}["{{ group.grouper }}{% if group.grouper == '云端' %} · Phase 2{% endif %}"]
-{% for d in group.list %}
+    subgraph SG{{ ns.sg_count }}["{{ gname }}{% if gname == '云端' %} · Phase 2{% endif %}"]
+        direction LR
+{% for d in glist %}
 {% set ns.i = ns.i + 1 %}{% set pid = 'D' ~ ns.i %}
-{% if group.grouper == '网络基础设施' and loop.first %}{% set ns.router = pid %}{% endif %}
+{% if gname == '网络基础设施' and loop.first %}{% set ns.router = pid %}{% endif %}
 {% if 'QNAP' in d.name %}{% set ns.qnap = pid %}{% endif %}
         {{ pid }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% elif d.get('monitor') is not none and not d.get('monitor') %}<br/>动态{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
 
@@ -26,6 +31,7 @@ graph TD
 {% endif %}
 {% endfor %}
     end
+{% endif %}
 {% endfor %}
 
 {% if ns.router %}
@@ -34,5 +40,11 @@ graph TD
 {% if ns.router and ns.qnap %}
     {{ ns.router }} --> {{ ns.qnap }}
 {% endif %}
+
+    %% 垂直约束：保证各分组自上而下逐行排列（一行一条），避免横向拉成过长长条
+{% for idx in range(1, ns.sg_count) %}
+    SG{{ idx }} ~~~ SG{{ idx + 1 }}
+{% endfor %}
+
     classDef warn fill:#fef2f2,stroke:#ef4444,color:#991b1b;
 ```
