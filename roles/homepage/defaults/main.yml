@@ -1,8 +1,0 @@
----
-# Homepage 默认变量（可在 host_vars/group_vars 覆盖）
-homepage_image: ghcr.io/gethomepage/homepage:latest
-homepage_port: 3000
-homepage_config_dir: /share/Container/homepage/config
-homepage_allowed_hosts: "{{ ansible_host }}:{{ homepage_port }},{{ ansible_host }},localhost:{{ homepage_port }},localhost"
-homepage_memory_limit: 512M
-homepage_cpus_limit: 0.5

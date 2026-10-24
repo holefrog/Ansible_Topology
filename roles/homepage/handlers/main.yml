@@ -1,6 +1,0 @@
----
-- name: 重启 homepage
-  community.docker.docker_container:
-    name: homepage
-    state: started
-    restart: true

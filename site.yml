@@ -3,7 +3,7 @@
 #
 # 全量跑：  ansible-playbook site.yml -e @secrets.yml
 # 只渲染：  ansible-playbook site.yml -e @secrets.yml --tags topology
-# 只装容器：ansible-playbook site.yml -e @secrets.yml --tags homepage,kuma
+# 只装监控：ansible-playbook site.yml -e @secrets.yml --tags kuma
 #
 # 注意：secrets.yml 放项目根目录（gitignore 已排除），格式见 README
 
@@ -17,7 +17,7 @@
       ansible.builtin.stat:
         path: "{{ topology_docker_bin }}"
       register: topology_docker_bin_stat
-      tags: [homepage, kuma, viz]
+      tags: [kuma, viz]
 
     - name: 提示先安装 Container Station
       ansible.builtin.fail:
@@ -25,7 +25,7 @@
           QNAP 上没有找到 Docker 命令（{{ topology_docker_bin }}）。
           请先在 QNAP App Center 安装并启动 Container Station，再运行部署。
       when: not topology_docker_bin_stat.stat.exists
-      tags: [homepage, kuma, viz]
+      tags: [kuma, viz]
 
     - name: 检查 Docker daemon 是否可用
       ansible.builtin.command:
@@ -36,7 +36,7 @@
       changed_when: false
       failed_when: false
       when: topology_docker_bin_stat.stat.exists
-      tags: [homepage, kuma, viz]
+      tags: [kuma, viz]
 
     - name: 提示启动 Container Station 或检查 Docker 权限
       ansible.builtin.fail:
@@ -47,12 +47,17 @@
       when:
         - topology_docker_bin_stat.stat.exists
         - topology_docker_info.rc != 0
-      tags: [homepage, kuma, viz]
+      tags: [kuma, viz]
+
+    - name: 确保已退役的 Homepage 容器已停止并移除
+      community.docker.docker_container:
+        name: homepage
+        state: absent
+      tags: [kuma, cleanup, viz]
 
   vars_files:
-    - vars/topology.yml  # 唯一真相源，两个模板都读它
+    - vars/topology.yml  # 唯一真相源，模板都读它
   roles:
-    - { role: homepage, tags: [homepage, viz] }
     - { role: uptime_kuma, tags: [kuma, viz] }
 
 - name: 上层 · 拓扑文本渲染（本机）

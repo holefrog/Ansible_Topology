@@ -7,14 +7,12 @@
   gather_facts: false
   vars:
     topology_docker_bin: /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker
-    homepage_config_dir: /share/Container/homepage/config
     kuma_data_dir: /share/Container/uptime-kuma/data
   tasks:
-    - name: 获取 Homepage 与 Uptime Kuma 容器状态
+    - name: 获取 Uptime Kuma 容器状态
       ansible.builtin.command:
         cmd: >-
           {{ topology_docker_bin }} ps -a
-          --filter "name=homepage"
           --filter "name=uptime-kuma"
           --format "table {{ '{{' }} .Names {{ '}}' }}\t{{ '{{' }} .Status {{ '}}' }}\t{{ '{{' }} .Ports {{ '}}' }}"
       register: topology_containers
@@ -24,7 +22,6 @@
       ansible.builtin.stat:
         path: "{{ item }}"
       loop:
-        - "{{ homepage_config_dir }}"
         - "{{ kuma_data_dir }}"
       register: topology_dirs
 
@@ -44,14 +41,6 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: 探测 Homepage HTTP 服务 (3000)
-      ansible.builtin.uri:
-        url: http://192.168.50.210:3000
-        timeout: 3
-        status_code: [200, 301, 302]
-      register: homepage_http
-      failed_when: false
-
     - name: 探测 Uptime Kuma HTTP 服务 (3001)
       ansible.builtin.uri:
         url: http://192.168.50.210:3001
@@ -71,7 +60,6 @@
           - "=========================================================="
           - "📊 Ansible_Topology 服务状态检查汇总"
           - "----------------------------------------------------------"
-          - "🏠 Homepage    : http://192.168.50.210:3000 -> {{ '✅ 正常可访问 (HTTP ' ~ homepage_http.status ~ ')' if (homepage_http.status | default(0)) in [200, 301, 302] else '❌ 不可达' }}"
           - "📈 Uptime Kuma : http://192.168.50.210:3001 -> {{ '✅ 正常可访问 (HTTP ' ~ kuma_http.status ~ ')' if (kuma_http.status | default(0)) in [200, 301, 302] else '❌ 不可达' }}"
           - "🗺️  拓扑输出文件: output/topology.md -> {{ '✅ 已生成 (' ~ topology_file_stat.stat.size ~ ' 字节)' if topology_file_stat.stat.exists else '❌ 未生成' }}"
           - "=========================================================="

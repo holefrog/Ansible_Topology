@@ -2,7 +2,7 @@
 # IP/MAC 来源：路由器 DHCP 租约、Manually Assigned IP 清单及在线设备表。
 # 未确认的字段保留 null 并标注待确认；手机使用随机 MAC，故不记录其 MAC。
 # group 仅使用：网络基础设施 / 服务器 / 媒体 / 终端 / IoT / 安防 / 云端
-# 本文件由 roles/homepage/templates/services.yaml.j2 和
+# 本文件由 roles/uptime_kuma 与
 # roles/topology/templates/topology.mmd.j2 读取渲染，手改输出文件无效。
 
 devices:
@@ -45,12 +45,6 @@ devices:
         mac: 52:54:00:5f:c7:6f
         port: 8123
         note: Virtualization Station，bridge 模式
-      - name: Homepage
-        kind: container
-        conn_type: 有线
-        addr_type: 容器
-        port: 3000
-        note: 统一服务入口
       - name: Uptime Kuma
         kind: container
         conn_type: 有线

@@ -21,15 +21,13 @@ flowchart TD
             D2 --- D4
             D5["Home Assistant<br/>:8123"]
             D2 --- D5
-            D6["Homepage<br/>:3000"]
+            D6["Uptime Kuma<br/>:3001"]
             D2 --- D6
-            D7["Uptime Kuma<br/>:3001"]
-            D2 --- D7
-            D8["TS-110<br/>192.168.50.110"]
+            D7["TS-110<br/>192.168.50.110"]
         end
 
         subgraph SG_Cloud ["云端 · Phase 2"]
-            D9["VPS"]
+            D8["VPS"]
         end
         SG_Server ~~~ SG_Cloud
     end
@@ -38,52 +36,52 @@ flowchart TD
         direction TB
         subgraph SG_Sec ["安防监控（6台）"]
             direction LR
-            D10["Camera_Mi_F2<br/>192.168.50.26"]
-            D11["Camera-Lumi-Backyard<br/>192.168.50.52"]
-            D12["ReoLink-DoorBell<br/>192.168.50.86"]
-            D13["stair-closet-camera<br/>192.168.50.109"]
-            D14["Camera_Mi_F1<br/>192.168.50.143"]
-            D15["Camera-Lumi-Garage<br/>192.168.50.213"]
-            D10 ~~~ D11 ~~~ D12 ~~~ D13 ~~~ D14 ~~~ D15
+            D9["Camera_Mi_F2<br/>192.168.50.26"]
+            D10["Camera-Lumi-Backyard<br/>192.168.50.52"]
+            D11["ReoLink-DoorBell<br/>192.168.50.86"]
+            D12["stair-closet-camera<br/>192.168.50.109"]
+            D13["Camera_Mi_F1<br/>192.168.50.143"]
+            D14["Camera-Lumi-Garage<br/>192.168.50.213"]
+            D9 ~~~ D10 ~~~ D11 ~~~ D12 ~~~ D13 ~~~ D14
         end
         subgraph SG_IoT ["IoT 智能家居（6台）"]
             direction LR
-            D16["Lumi-Gateway-Floor-1<br/>192.168.50.101"]
-            D17["Lumi-Gateway-Floor-2<br/>192.168.50.201"]
-            D18["HoneyWell<br/>192.168.50.193"]
-            D19["bedside-lamp<br/>192.168.50.246"]
-            D20["garage-opener<br/>192.168.50.221"]
-            D21["backlit-frame<br/>192.168.50.187"]
-            D16 ~~~ D17 ~~~ D18 ~~~ D19 ~~~ D20 ~~~ D21
+            D15["Lumi-Gateway-Floor-1<br/>192.168.50.101"]
+            D16["Lumi-Gateway-Floor-2<br/>192.168.50.201"]
+            D17["HoneyWell<br/>192.168.50.193"]
+            D18["bedside-lamp<br/>192.168.50.246"]
+            D19["garage-opener<br/>192.168.50.221"]
+            D20["backlit-frame<br/>192.168.50.187"]
+            D15 ~~~ D16 ~~~ D17 ~~~ D18 ~~~ D19 ~~~ D20
         end
         subgraph SG_Media ["媒体视听（7台）"]
             direction LR
-            D22["ESP32-Bathroom<br/>192.168.50.192"]
-            D23["ESP32-LivingRoom<br/>192.168.50.114"]
-            D24["ESP32-A1S<br/>192.168.50.169"]
-            D25["ESP32-Kitchen<br/>192.168.50.147"]
-            D26["RPI 播放器<br/>192.168.50.207"]
-            D27["Sony TV<br/>192.168.50.220"]
-            D28["Xiaoai-X08A<br/>192.168.50.180"]
-            D22 ~~~ D23 ~~~ D24 ~~~ D25 ~~~ D26 ~~~ D27 ~~~ D28
+            D21["ESP32-Bathroom<br/>192.168.50.192"]
+            D22["ESP32-LivingRoom<br/>192.168.50.114"]
+            D23["ESP32-A1S<br/>192.168.50.169"]
+            D24["ESP32-Kitchen<br/>192.168.50.147"]
+            D25["RPI 播放器<br/>192.168.50.207"]
+            D26["Sony TV<br/>192.168.50.220"]
+            D27["Xiaoai-X08A<br/>192.168.50.180"]
+            D21 ~~~ D22 ~~~ D23 ~~~ D24 ~~~ D25 ~~~ D26 ~~~ D27
         end
         subgraph SG_PC ["电脑与平板（4台）"]
             direction LR
-            D29["ThinkPad-T14<br/>192.168.50.140"]
-            D30["ThinkPad-X230<br/>192.168.50.230"]
-            D31["Home-Xiaoxin<br/>192.168.50.195"]
-            D32["Lenovo-Pad<br/>192.168.50.160"]
-            D29 ~~~ D30 ~~~ D31 ~~~ D32
+            D28["ThinkPad-T14<br/>192.168.50.140"]
+            D29["ThinkPad-X230<br/>192.168.50.230"]
+            D30["Home-Xiaoxin<br/>192.168.50.195"]
+            D31["Lenovo-Pad<br/>192.168.50.160"]
+            D28 ~~~ D29 ~~~ D30 ~~~ D31
         end
         subgraph SG_Mobile ["移动手机（6台）"]
             direction LR
-            D33["Pixel-10-Pro<br/>192.168.50.53"]
-            D34["Pixel-7-Pro<br/>192.168.50.253"]
-            D35["iPhone-15ProMax<br/>192.168.50.99"]
-            D36["Pixel-2-XL<br/>192.168.50.205"]
-            D37["iPhone-Moneris<br/>192.168.50.227"]
-            D38["iPhone-XS<br/>192.168.50.103"]
-            D33 ~~~ D34 ~~~ D35 ~~~ D36 ~~~ D37 ~~~ D38
+            D32["Pixel-10-Pro<br/>192.168.50.53"]
+            D33["Pixel-7-Pro<br/>192.168.50.253"]
+            D34["iPhone-15ProMax<br/>192.168.50.99"]
+            D35["Pixel-2-XL<br/>192.168.50.205"]
+            D36["iPhone-Moneris<br/>192.168.50.227"]
+            D37["iPhone-XS<br/>192.168.50.103"]
+            D32 ~~~ D33 ~~~ D34 ~~~ D35 ~~~ D36 ~~~ D37
         end
 
         SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_PC ~~~ SG_Mobile
