@@ -49,16 +49,25 @@ flowchart TD
 
     subgraph Wireless ["【右翼 · 无线主干：安防 / IoT / 媒体 / 终端】"]
         direction TB
+{% set term_pcs = [] %}
+{% set term_phones = [] %}
+{% for d in devices if d.group == '终端' %}
+{% if 'Phone' in d.name or 'Pixel' in d.name %}
+{% set _ = term_phones.append(d) %}
+{% else %}
+{% set _ = term_pcs.append(d) %}
+{% endif %}
+{% endfor %}
 {% set wireless_groups = [
-    ('安防', 'SG_Sec', '安防监控', 6),
-    ('IoT', 'SG_IoT', 'IoT 智能家居', 6),
-    ('媒体', 'SG_Media', '媒体视听', 5),
-    ('终端', 'SG_Term', '个人终端', 5)
+    ('SG_Sec', '安防监控', devices | selectattr('group', 'equalto', '安防') | list),
+    ('SG_IoT', 'IoT 智能家居', devices | selectattr('group', 'equalto', 'IoT') | list),
+    ('SG_Media', '媒体视听', devices | selectattr('group', 'equalto', '媒体') | list),
+    ('SG_PC', '电脑与平板', term_pcs),
+    ('SG_Mobile', '移动手机', term_phones)
 ] %}
-{% for g_key, sg_id, g_title, col_limit in wireless_groups %}
-{% set glist = devices | selectattr('group', 'equalto', g_key) | list %}
+{% for sg_id, g_title, glist in wireless_groups %}
 {% if glist | length > 0 %}
-        subgraph {{ sg_id }} ["{{ g_title }}"]
+        subgraph {{ sg_id }} ["{{ g_title }}（{{ glist | length }}台）"]
             direction LR
 {% set dev_ids = [] %}
 {% for d in glist %}
@@ -67,22 +76,14 @@ flowchart TD
             {{ cur_id }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% elif d.get('monitor') is not none and not d.get('monitor') %}<br/>动态{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
 
 {% endfor %}
-{% set rows = dev_ids | batch(col_limit) | list %}
-{% for r in rows %}
-{% if r | length > 1 %}
-            {{ r | join(' ~~~ ') }}
-{% endif %}
-{% endfor %}
-{% if rows | length > 1 %}
-{% for col_idx in range(rows[1] | length) %}
-            {{ rows[0][col_idx] }} ~~~ {{ rows[1][col_idx] }}
-{% endfor %}
+{% if dev_ids | length > 1 %}
+            {{ dev_ids | join(' ~~~ ') }}
 {% endif %}
         end
 {% endif %}
 {% endfor %}
 
-        SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_Term
+        SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_PC ~~~ SG_Mobile
     end
 
 {% if ns.router_id %}

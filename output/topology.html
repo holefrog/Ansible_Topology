@@ -34,7 +34,7 @@
   </style>
 </head>
 <body>
-  <h2>家庭网络与资产拓扑图（方案 A · 宽屏展翅）</h2>
+  <h2>家庭网络与资产拓扑图（左右双翼标准版）</h2>
   <div class="mermaid-box">
     <pre class="mermaid">
 flowchart TD
@@ -68,7 +68,7 @@ flowchart TD
 
     subgraph Wireless ["【右翼 · 无线主干：安防 / IoT / 媒体 / 终端】"]
         direction TB
-        subgraph SG_Sec ["安防监控"]
+        subgraph SG_Sec ["安防监控（6台）"]
             direction LR
             D10["Camera_Mi_F2<br/>192.168.50.26"]
             D11["Camera-Lumi-Backyard<br/>192.168.50.52"]
@@ -78,7 +78,7 @@ flowchart TD
             D15["Camera-Lumi-Garage<br/>192.168.50.213"]
             D10 ~~~ D11 ~~~ D12 ~~~ D13 ~~~ D14 ~~~ D15
         end
-        subgraph SG_IoT ["IoT 智能家居"]
+        subgraph SG_IoT ["IoT 智能家居（6台）"]
             direction LR
             D16["Lumi-Gateway-Floor-1<br/>192.168.50.101"]
             D17["Lumi-Gateway-Floor-2<br/>192.168.50.201"]
@@ -88,7 +88,7 @@ flowchart TD
             D21["backlit-frame<br/>192.168.50.187"]
             D16 ~~~ D17 ~~~ D18 ~~~ D19 ~~~ D20 ~~~ D21
         end
-        subgraph SG_Media ["媒体视听"]
+        subgraph SG_Media ["媒体视听（7台）"]
             direction LR
             D22["ESP32-Bathroom<br/>192.168.50.192"]
             D23["ESP32-LivingRoom<br/>192.168.50.114"]
@@ -97,33 +97,28 @@ flowchart TD
             D26["RPI 播放器<br/>192.168.50.207"]
             D27["Sony TV<br/>192.168.50.220"]
             D28["Xiaoai-X08A<br/>192.168.50.180"]
-            D22 ~~~ D23 ~~~ D24 ~~~ D25 ~~~ D26
-            D27 ~~~ D28
-            D22 ~~~ D27
-            D23 ~~~ D28
+            D22 ~~~ D23 ~~~ D24 ~~~ D25 ~~~ D26 ~~~ D27 ~~~ D28
         end
-        subgraph SG_Term ["个人终端"]
+        subgraph SG_PC ["电脑与平板（4台）"]
             direction LR
-            D29["Pixel-10-Pro<br/>192.168.50.53"]
-            D30["Pixel-7-Pro<br/>192.168.50.253"]
-            D31["iPhone-15ProMax<br/>192.168.50.99"]
-            D32["Pixel-2-XL<br/>192.168.50.205"]
-            D33["iPhone-Moneris<br/>192.168.50.227"]
-            D34["iPhone-XS<br/>192.168.50.103"]
-            D35["ThinkPad-T14<br/>192.168.50.140"]
-            D36["ThinkPad-X230<br/>192.168.50.230"]
-            D37["Home-Xiaoxin<br/>192.168.50.195"]
-            D38["Lenovo-Pad<br/>192.168.50.160"]
-            D29 ~~~ D30 ~~~ D31 ~~~ D32 ~~~ D33
-            D34 ~~~ D35 ~~~ D36 ~~~ D37 ~~~ D38
-            D29 ~~~ D34
-            D30 ~~~ D35
-            D31 ~~~ D36
-            D32 ~~~ D37
-            D33 ~~~ D38
+            D29["ThinkPad-T14<br/>192.168.50.140"]
+            D30["ThinkPad-X230<br/>192.168.50.230"]
+            D31["Home-Xiaoxin<br/>192.168.50.195"]
+            D32["Lenovo-Pad<br/>192.168.50.160"]
+            D29 ~~~ D30 ~~~ D31 ~~~ D32
+        end
+        subgraph SG_Mobile ["移动手机（6台）"]
+            direction LR
+            D33["Pixel-10-Pro<br/>192.168.50.53"]
+            D34["Pixel-7-Pro<br/>192.168.50.253"]
+            D35["iPhone-15ProMax<br/>192.168.50.99"]
+            D36["Pixel-2-XL<br/>192.168.50.205"]
+            D37["iPhone-Moneris<br/>192.168.50.227"]
+            D38["iPhone-XS<br/>192.168.50.103"]
+            D33 ~~~ D34 ~~~ D35 ~~~ D36 ~~~ D37 ~~~ D38
         end
 
-        SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_Term
+        SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_PC ~~~ SG_Mobile
     end
 
     D1 ==>|千兆有线主干| Wired
