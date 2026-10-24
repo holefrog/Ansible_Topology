@@ -1,7 +1,10 @@
+<!--
+  本文件由 vars/topology.yml 自动渲染，请勿手改
+  渲染命令：ansible-playbook site.yml --tags topology
+  输出为 Markdown（含 mermaid 代码块），推到 GitHub 后自动成图
+-->
+
 ```mermaid
-# 本文件由 vars/topology.yml 自动渲染，请勿手改
-# 渲染命令：ansible-playbook site.yml --tags topology
-# 输出为 Markdown（含 mermaid 代码块），推到 GitHub 后自动成图
 graph TD
     Internet([Internet<br/>外网入口])
 
