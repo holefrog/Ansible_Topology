@@ -7,44 +7,86 @@
 ```mermaid
 flowchart TD
     Internet([Internet<br/>外网入口])
-{% set ns = namespace(i=0, router='', qnap='', sg_count=0) %}
-{% set group_order = ['网络基础设施', '服务器', '安防', 'IoT', '媒体', '终端', '云端'] %}
-{% for gname in group_order %}
-{% set glist = devices | selectattr('group', 'equalto', gname) | list %}
-{% if glist | length > 0 %}
-{% set ns.sg_count = ns.sg_count + 1 %}
+{% set ns = namespace(i=0, router_id='', qnap_id='') %}
+{% set router_list = devices | selectattr('group', 'equalto', '网络基础设施') | list %}
+{% if router_list | length > 0 %}
+{% set ns.i = ns.i + 1 %}{% set ns.router_id = 'D' ~ ns.i %}
+    {{ ns.router_id }}["{{ router_list[0].name }}<br/>{{ router_list[0].ip }}"]
+    Internet --> {{ ns.router_id }}
+{% endif %}
 
-    subgraph SG{{ ns.sg_count }}["{{ gname }}{% if gname == '云端' %} · Phase 2{% endif %}"]
-        direction LR
-{% for d in glist %}
+    subgraph Wired ["【左翼 · 有线主干：核心服务器与存储】"]
+        direction TB
+        subgraph SG_Server ["服务器群"]
+            direction LR
+{% set server_list = devices | selectattr('group', 'equalto', '服务器') | list %}
+{% for d in server_list %}
 {% set ns.i = ns.i + 1 %}{% set pid = 'D' ~ ns.i %}
-{% if gname == '网络基础设施' and loop.first %}{% set ns.router = pid %}{% endif %}
-{% if 'QNAP' in d.name %}{% set ns.qnap = pid %}{% endif %}
-        {{ pid }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% elif d.get('monitor') is not none and not d.get('monitor') %}<br/>动态{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
-
+{% if 'QNAP' in d.name %}{% set ns.qnap_id = pid %}{% endif %}
+            {{ pid }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
 {% if d.get('children') %}
 {% for c in d.children %}
 {% set ns.i = ns.i + 1 %}
-        D{{ ns.i }}["{{ c.name }}{% if c.get('port') %}<br/>:{{ c.get('port') }}{% endif %}"]
-        {{ pid }} --- D{{ ns.i }}
+            D{{ ns.i }}["{{ c.name }}{% if c.get('port') %}<br/>:{{ c.get('port') }}{% endif %}"]
+            {{ pid }} --- D{{ ns.i }}
 {% endfor %}
 {% endif %}
 {% endfor %}
+        end
+
+{% set cloud_list = devices | selectattr('group', 'equalto', '云端') | list %}
+{% if cloud_list | length > 0 %}
+        subgraph SG_Cloud ["云端 · Phase 2"]
+{% for d in cloud_list %}
+{% set ns.i = ns.i + 1 %}
+            D{{ ns.i }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% endif %}"]
+{% endfor %}
+        end
+        SG_Server ~~~ SG_Cloud
+{% endif %}
     end
+
+    subgraph Wireless ["【右翼 · 无线主干：安防 / IoT / 媒体 / 终端】"]
+        direction TB
+{% set wireless_groups = [
+    ('安防', 'SG_Sec', '安防监控', 6),
+    ('IoT', 'SG_IoT', 'IoT 智能家居', 6),
+    ('媒体', 'SG_Media', '媒体视听', 5),
+    ('终端', 'SG_Term', '个人终端', 5)
+] %}
+{% for g_key, sg_id, g_title, col_limit in wireless_groups %}
+{% set glist = devices | selectattr('group', 'equalto', g_key) | list %}
+{% if glist | length > 0 %}
+        subgraph {{ sg_id }} ["{{ g_title }}"]
+            direction LR
+{% set dev_ids = [] %}
+{% for d in glist %}
+{% set ns.i = ns.i + 1 %}{% set cur_id = 'D' ~ ns.i %}
+{% set _ = dev_ids.append(cur_id) %}
+            {{ cur_id }}["{{ d.name }}{% if d.get('ip') %}<br/>{{ d.ip }}{% elif d.get('monitor') is not none and not d.get('monitor') %}<br/>动态{% endif %}{% if d.get('note') and '⚠' in d.get('note') %} ⚠{% endif %}"]{% if d.get('note') and '⚠' in d.get('note') %}:::warn{% endif %}
+{% endfor %}
+{% set rows = dev_ids | batch(col_limit) | list %}
+{% for r in rows %}
+{% if r | length > 1 %}
+            {{ r | join(' ~~~ ') }}
+{% endif %}
+{% endfor %}
+{% if rows | length > 1 %}
+{% for col_idx in range(rows[1] | length) %}
+            {{ rows[0][col_idx] }} ~~~ {{ rows[1][col_idx] }}
+{% endfor %}
+{% endif %}
+        end
 {% endif %}
 {% endfor %}
 
-{% if ns.router %}
-    Internet --> {{ ns.router }}
-{% endif %}
-{% if ns.router and ns.qnap %}
-    {{ ns.router }} --> {{ ns.qnap }}
-{% endif %}
+        SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_Term
+    end
 
-    %% 垂直约束：保证各分组自上而下逐行排列（一行一条），避免横向拉成过长长条
-{% for idx in range(1, ns.sg_count) %}
-    SG{{ idx }} ~~~ SG{{ idx + 1 }}
-{% endfor %}
+{% if ns.router_id %}
+    {{ ns.router_id }} ==>|千兆有线主干| Wired
+    {{ ns.router_id }} -.->|Wi-Fi 2.4G/5G 接入| Wireless
+{% endif %}
 
     classDef warn fill:#fef2f2,stroke:#ef4444,color:#991b1b;
 ```

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>拓扑排版对比：方案 A（右侧5列） vs 方案 B（纯纵向5列）</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 30px 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      color: #60a5fa;
+    }
+    .section-card {
+      background: #131b2e;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .badge-blue { background: #1d4ed8; color: #dbeafe; }
+    .badge-green { background: #065f46; color: #d1fae5; }
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+    .card-desc {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .mermaid-container {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>电脑屏幕排版效果直接对比</h1>
+    <p style="color: #94a3b8;">两个方案均直接呈现在本页面（无需切换 Tab），右侧子设备已全量重构为 5~6 列宽屏布局</p>
+  </div>
+
+  <!-- 方案 A -->
+  <div class="section-card">
+    <span class="badge badge-blue">方案 A（推荐 · 左右双翼宽屏）</span>
+    <div class="card-title">方案 A：左右双翼展开（右侧子设备已重构为 5~6 列横排）</div>
+    <div class="card-desc">
+      <strong>改进点</strong>：彻底消灭了原本右侧 1 列竖排的摩天大楼！安防（6列横排）、IoT（6列横排）、媒体（5+2列）、终端（5列×2行）。左侧是有线核心服务器，右侧是无线资产矩阵。完美利用 16:9 电脑宽屏，一屏看全。
+    </div>
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    Internet([Internet<br/>外网入口]) --> Router["ASUS TUF Gaming BE6500<br/>192.168.50.1"]
+
+    subgraph Wired ["【左翼 · 有线主干：核心服务器与存储】"]
+        direction TB
+        subgraph SG_Server ["服务器群"]
+            QNAP["QNAP TS-453Bmini<br/>192.168.50.210"]
+            TS110["TS-110<br/>192.168.50.110"]
+            C1["LMS<br/>:9000"]
+            C2["MariaDB<br/>:3306"]
+            C3["Home Assistant<br/>:8123"]
+            C4["Homepage<br/>:3000"]
+            C5["Uptime Kuma<br/>:3001"]
+            QNAP --- C1
+            QNAP --- C2
+            QNAP --- C3
+            QNAP --- C4
+            QNAP --- C5
+        end
+        subgraph SG_Cloud ["云端 · Phase 2"]
+            VPS["VPS 反代节点"]
+        end
+        SG_Server ~~~ SG_Cloud
+    end
+
+    subgraph Wireless ["【右翼 · 无线主干：安防 / IoT / 媒体 / 终端（每行 5~6 列）】"]
+        direction TB
+        subgraph SG_Sec ["安防监控（6 列横排）"]
+            S1["Camera_Mi_F2<br/>.26"] ~~~ S2["Camera-Backyard<br/>.52"] ~~~ S3["DoorBell<br/>.86"] ~~~ S4["Camera-Stair<br/>.109"] ~~~ S5["Camera_Mi_F1<br/>.143"] ~~~ S6["Camera-Garage<br/>.213"]
+        end
+        subgraph SG_IoT ["IoT 智能家居（6 列横排）"]
+            I1["Lumi-Floor-1<br/>.101"] ~~~ I2["Lumi-Floor-2<br/>.201"] ~~~ I3["HoneyWell<br/>.193"] ~~~ I4["床头台灯<br/>.246"] ~~~ I5["车库开门器<br/>.221"] ~~~ I6["背光相框<br/>.187"]
+        end
+        subgraph SG_Media ["媒体视听（5 列 + 2 列）"]
+            M1["ESP32-浴室<br/>.192"] ~~~ M2["ESP32-客厅<br/>.114"] ~~~ M3["ESP32-A1S<br/>.169"] ~~~ M4["ESP32-厨房<br/>.147"] ~~~ M5["RPI 播放器<br/>.207"]
+            M6["Sony 电视<br/>.220"] ~~~ M7["小爱音箱<br/>.180"]
+            M1 ~~~ M6
+            M2 ~~~ M7
+        end
+        subgraph SG_Term ["个人终端（5 列 × 2 行 规整矩阵）"]
+            T1["ThinkPad-T14<br/>.140"] ~~~ T2["ThinkPad-X230<br/>.230"] ~~~ T3["Home-Xiaoxin<br/>.195"] ~~~ T4["Lenovo-Pad<br/>.160"] ~~~ T5["Pixel-10-Pro<br/>.53"]
+            T6["Pixel-7-Pro<br/>.253"] ~~~ T7["iPhone-15PM<br/>.99"] ~~~ T8["Pixel-2-XL<br/>.205"] ~~~ T9["iPhone-Moneris<br/>.227"] ~~~ T10["iPhone-XS<br/>.103"]
+            T1 ~~~ T6
+            T2 ~~~ T7
+            T3 ~~~ T8
+            T4 ~~~ T9
+            T5 ~~~ T10
+        end
+        SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_Term
+    end
+
+    Router ==>|千兆有线| Wired
+    Router -.->|Wi-Fi 2.4G/5G| Wireless
+
+      </pre>
+    </div>
+  </div>
+
+  <!-- 方案 B -->
+  <div class="section-card">
+    <span class="badge badge-green">方案 B（纵向 5 列规范方阵）</span>
+    <div class="card-title">方案 B：自上而下单列对齐（每个模块统一为 5~6 列对称方阵）</div>
+    <div class="card-desc">
+      <strong>改进点</strong>：彻底修复了之前因为 display:none 导致空白的问题。现在上下每个分类（服务器、安防、IoT、媒体、终端）全都规整为 5~6 列横向卡片，宽度整齐划一，消灭了忽宽忽窄与落单卡片。
+    </div>
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    Internet([Internet<br/>外网入口]) --> Router["ASUS TUF Gaming BE6500<br/>192.168.50.1"]
+
+    subgraph SG_Server ["1. 核心服务器"]
+        QNAP["QNAP TS-453Bmini<br/>192.168.50.210"]
+        TS110["TS-110<br/>192.168.50.110"]
+        C1["LMS<br/>:9000"]
+        C2["MariaDB<br/>:3306"]
+        C3["Home Assistant<br/>:8123"]
+        C4["Homepage<br/>:3000"]
+        C5["Uptime Kuma<br/>:3001"]
+        QNAP --- C1
+        QNAP --- C2
+        QNAP --- C3
+        QNAP --- C4
+        QNAP --- C5
+    end
+
+    subgraph SG_Sec ["2. 安防监控（6 列一字横排）"]
+        S1["Camera_Mi_F2<br/>.26"] ~~~ S2["Camera-Backyard<br/>.52"] ~~~ S3["DoorBell<br/>.86"] ~~~ S4["Camera-Stair<br/>.109"] ~~~ S5["Camera_Mi_F1<br/>.143"] ~~~ S6["Camera-Garage<br/>.213"]
+    end
+
+    subgraph SG_IoT ["3. IoT 智能家居（6 列一字横排）"]
+        I1["Lumi-Floor-1<br/>.101"] ~~~ I2["Lumi-Floor-2<br/>.201"] ~~~ I3["HoneyWell<br/>.193"] ~~~ I4["床头台灯<br/>.246"] ~~~ I5["车库开门器<br/>.221"] ~~~ I6["背光相框<br/>.187"]
+    end
+
+    subgraph SG_Media ["4. 媒体视听（5 列 + 2 列）"]
+        M1["ESP32-浴室<br/>.192"] ~~~ M2["ESP32-客厅<br/>.114"] ~~~ M3["ESP32-A1S<br/>.169"] ~~~ M4["ESP32-厨房<br/>.147"] ~~~ M5["RPI 播放器<br/>.207"]
+        M6["Sony 电视<br/>.220"] ~~~ M7["小爱音箱<br/>.180"]
+        M1 ~~~ M6
+        M2 ~~~ M7
+    end
+
+    subgraph SG_Term ["5. 个人终端（5 列 × 2 行 规整矩阵）"]
+        T1["ThinkPad-T14<br/>.140"] ~~~ T2["ThinkPad-X230<br/>.230"] ~~~ T3["Home-Xiaoxin<br/>.195"] ~~~ T4["Lenovo-Pad<br/>.160"] ~~~ T5["Pixel-10-Pro<br/>.53"]
+        T6["Pixel-7-Pro<br/>.253"] ~~~ T7["iPhone-15PM<br/>.99"] ~~~ T8["Pixel-2-XL<br/>.205"] ~~~ T9["iPhone-Moneris<br/>.227"] ~~~ T10["iPhone-XS<br/>.103"]
+        T1 ~~~ T6
+        T2 ~~~ T7
+        T3 ~~~ T8
+        T4 ~~~ T9
+        T5 ~~~ T10
+    end
+
+    subgraph SG_Cloud ["6. 云端 · Phase 2"]
+        VPS["VPS 反代节点"]
+    end
+
+    Router --> QNAP
+    SG_Server ~~~ SG_Sec ~~~ SG_IoT ~~~ SG_Media ~~~ SG_Term ~~~ SG_Cloud
+
+      </pre>
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      flowchart: { useMaxWidth: false, htmlLabels: true }
+    });
+  </script>
+</body>
+</html>
