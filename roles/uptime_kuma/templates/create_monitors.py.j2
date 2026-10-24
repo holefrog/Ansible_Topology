@@ -21,21 +21,54 @@ def main():
 
         raw = api.get_monitors()
         if isinstance(raw, dict):
-            existing = {m["name"] for m in raw.values()}
+            existing = {m["name"]: m for m in raw.values()}
         else:
-            existing = {m["name"] for m in raw}
+            existing = {m["name"]: m for m in raw}
 
+        # 1. 提取所有需要的 Group 并确保存在
+        group_id_map = {}
+        for m in MONITORS:
+            grp_name = m.get("group")
+            if grp_name and grp_name not in group_id_map:
+                if grp_name in existing:
+                    group_id_map[grp_name] = existing[grp_name]["id"]
+                else:
+                    res = api.add_monitor(
+                        type=MonitorType.GROUP,
+                        name=grp_name,
+                    )
+                    gid = res["monitorID"]
+                    group_id_map[grp_name] = gid
+                    existing[grp_name] = {"id": gid, "name": grp_name, "type": "group"}
+                    print(f"OK 已创建分组: {grp_name} (ID: {gid})")
+
+        # 2. 遍历监控项：创建或移动所属分组
         for mon in MONITORS:
             name = mon["name"]
+            grp_name = mon.get("group")
+            target_parent = group_id_map.get(grp_name) if grp_name else None
+
             if name in existing:
-                print(f"SKIP 已存在: {name}")
+                curr = existing[name]
+                curr_parent = curr.get("parent")
+                # 如果已存在但分组不一致，移入目标分组
+                if target_parent is not None and curr_parent != target_parent:
+                    api.edit_monitor(curr["id"], parent=target_parent)
+                    curr["parent"] = target_parent
+                    print(f"OK 已归类: {name} -> 移入分组 [{grp_name}]")
+                else:
+                    print(f"SKIP 已存在: {name}")
                 continue
+
             kwargs = dict(
                 type=TYPE_MAP[mon["type"]],
                 name=name,
                 interval={{ kuma_monitor_interval }},
                 maxretries={{ kuma_monitor_maxretries }},
             )
+            if target_parent is not None:
+                kwargs["parent"] = target_parent
+
             if mon["type"] == "http":
                 kwargs["url"] = mon["url"]
             elif mon["type"] == "port":

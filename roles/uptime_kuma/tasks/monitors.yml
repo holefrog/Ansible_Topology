@@ -41,7 +41,9 @@
   ansible.builtin.command: "{{ playbook_dir }}/.venv/bin/python3 /tmp/ansible_kuma_monitors.py"
   delegate_to: localhost
   register: kuma_monitors_result
-  changed_when: "'OK 已创建' in kuma_monitors_result.stdout"
+  changed_when: >-
+    'OK 已创建' in kuma_monitors_result.stdout or
+    'OK 已归类' in kuma_monitors_result.stdout
 
 - name: 删除临时脚本（含账号密码，不留痕）
   ansible.builtin.file:
