@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""由 Ansible 渲染并执行：从 vars/topology.yml 幂等地同步 Kuma 监控项。
-自动生成带 IP 的名称与 Markdown 详细描述卡片（含链接、MAC、备注），并自动归入分组。
+"""由 Ansible 渲染并执行：从 vars/topology.yml 纯通用数据驱动同步 Kuma 监控项。
+无需任何设备名称硬编码，统一由 topology.yml 字段自动生成名称、类型与 Markdown 档案卡片。
 依赖：pip install uptime-kuma-api-ng（支持 Kuma 1.x/2.x）。
 """
 import sys
@@ -18,6 +18,7 @@ false = False
 true = True
 
 DEVICES = {{ devices | to_json }}
+EXTRA_MONITORS = {{ kuma_monitors | default([]) | to_json }}
 
 GROUP_MAP = {
     "网络基础设施": "网络与服务器",
@@ -52,100 +53,78 @@ def build_target_monitors():
         if note:
             desc_lines.append(f"- **备注**: {note}")
 
-        link = None
-        if name == "ASUS TUF Gaming BE6500":
-            link = f"http://{ip}"
-            dname = f"路由器 ({ip})"
-            aliases = ["路由器", "ASUS TUF Gaming BE6500", dname]
-        elif name == "QNAP TS-453Bmini":
-            link = f"http://{ip}:8080"
-            dname = f"QNAP ({ip})"
-            aliases = ["QNAP", "QNAP TS-453Bmini", dname]
-        elif name == "TS-110":
-            link = f"http://{ip}:8080"
-            dname = f"TS-110 ({ip})"
-            aliases = ["TS-110", dname]
-        elif "Camera" in name or "DoorBell" in name:
-            link = f"http://{ip}"
-            dname = f"{name} ({ip})"
-            aliases = [name, dname]
-        elif "ESP32" in name:
-            link = f"http://{ip}"
-            dname = f"{name} ({ip})"
-            aliases = [name, dname]
-        else:
-            dname = f"{name} ({ip})"
-            aliases = [name, dname]
-
-        if link:
-            desc_lines.append(f"- [🔗 打开设备管理/控制后台]({link})")
+        # 通用管理后台链接（有显式端口带端口，网关默认 80）
+        if d.get("port"):
+            desc_lines.append(f"- [🔗 打开管理后台](http://{ip}:{d['port']})")
+        elif addr == "网关":
+            desc_lines.append(f"- [🔗 打开网关后台](http://{ip})")
 
         targets.append({
-            "name": dname,
-            "aliases": aliases,
+            "name": f"{name} ({ip})",
+            "base_name": name,
             "type": "ping",
             "hostname": ip,
             "group": grp,
             "description": "\n".join(desc_lines),
         })
 
-        if d.get("children"):
-            for c in d["children"]:
-                cname = c["name"]
-                cport = c.get("port")
-                cip = c.get("ip") or ip
-                c_desc = []
-                cconn = c.get("conn_type") or conn
-                caddr = c.get("addr_type") or "容器"
-                c_type_info = f"{cconn} · {caddr}".strip(" ·")
-                if c_type_info:
-                    c_desc.append(f"- **类型**: {c_type_info}")
-                if c.get("mac"):
-                    c_desc.append(f"- **MAC**: `{c['mac']}`")
-                if c.get("service"):
-                    c_desc.append(f"- **服务**: {c['service']}")
-                if c.get("note"):
-                    c_desc.append(f"- **备注**: {c['note']}")
+        # 子服务/容器/虚拟机通用展开
+        for c in d.get("children", []):
+            if c.get("monitor") is False or c.get("name") in ["Uptime Kuma", "Homepage"]:
+                continue
 
-                if cname == "LMS":
-                    c_desc.append(f"- [🔗 打开 LMS 音乐控制台](http://{cip}:{cport})")
+            cname = c["name"]
+            cport = c.get("port")
+            cip = c.get("ip") or ip
+            cconn = c.get("conn_type") or conn
+            caddr = c.get("addr_type") or "容器"
+
+            c_desc = []
+            c_type_info = f"{cconn} · {caddr}".strip(" ·")
+            if c_type_info:
+                c_desc.append(f"- **类型**: {c_type_info}")
+            if c.get("mac"):
+                c_desc.append(f"- **MAC**: `{c['mac']}`")
+            if c.get("service"):
+                c_desc.append(f"- **服务**: {c['service']}")
+            if c.get("note"):
+                c_desc.append(f"- **备注**: {c['note']}")
+
+            if cport:
+                # 数据库等已知协议端口走 port 探测，Web 服务走 http 探测
+                if cport in [3306, 5432, 6379, 27017]:
                     targets.append({
-                        "name": f"LMS ({cip}:{cport})",
-                        "aliases": ["LMS", f"LMS ({cip}:{cport})"],
-                        "type": "http",
-                        "url": f"http://{cip}:{cport}",
-                        "group": grp,
-                        "description": "\n".join(c_desc),
-                    })
-                elif cname == "MariaDB":
-                    targets.append({
-                        "name": f"MariaDB ({cip}:{cport})",
-                        "aliases": ["MariaDB", f"MariaDB ({cip}:{cport})"],
+                        "name": f"{cname} ({cip}:{cport})",
+                        "base_name": cname,
                         "type": "port",
                         "hostname": cip,
                         "port": cport,
                         "group": grp,
                         "description": "\n".join(c_desc),
                     })
-                elif cname == "Home Assistant":
-                    c_desc.append(f"- [🔗 打开 Home Assistant 控制台](http://{cip}:{cport})")
+                else:
+                    c_desc.append(f"- [🔗 打开服务控制台](http://{cip}:{cport})")
                     targets.append({
-                        "name": f"Home Assistant ({cip}:{cport})",
-                        "aliases": ["Home Assistant", f"Home Assistant ({cip}:{cport})"],
+                        "name": f"{cname} ({cip}:{cport})",
+                        "base_name": cname,
                         "type": "http",
                         "url": f"http://{cip}:{cport}",
                         "group": grp,
                         "description": "\n".join(c_desc),
                     })
-                    ha_desc = f"- **类型**: 有线 · 静态 (VM Bridge 模式)\n- **MAC**: `{c.get('mac')}`\n- **备注**: Virtualization Station，bridge 模式"
-                    targets.append({
-                        "name": f"HA 主机 ({cip})",
-                        "aliases": ["HA 主机", f"HA 主机 ({cip})"],
-                        "type": "ping",
-                        "hostname": cip,
-                        "group": grp,
-                        "description": ha_desc,
-                    })
+            else:
+                targets.append({
+                    "name": f"{cname} ({cip})",
+                    "base_name": cname,
+                    "type": "ping",
+                    "hostname": cip,
+                    "group": grp,
+                    "description": "\n".join(c_desc),
+                })
+
+    for em in EXTRA_MONITORS:
+        targets.append(em)
+
     return targets
 
 
@@ -176,27 +155,39 @@ def main():
                 existing[gid] = {"id": gid, "name": grp_name, "type": MonitorType.GROUP}
                 print(f"OK 已创建分组: {grp_name} (ID: {gid})")
 
-        # 2. 遍历监控项：匹配已有监控项并更新名称/描述/分组，或创建新监控项
+        # 2. 遍历监控项：按目标名称、基本名称或IP/URL通用匹配，原地更新或新建
         matched_ids = set()
 
         for mon in targets:
             target_name = mon["name"]
+            base_name = mon.get("base_name", "")
             grp_name = mon.get("group")
             target_parent = group_id_map.get(grp_name) if grp_name else None
             target_desc = mon.get("description", "")
 
-            # 寻找最佳匹配（按名称、别名、IP或URL）
+            # 通用匹配：名称完全一致 > 基本名称匹配 > 目标 IP/URL 匹配
             match = None
             for mid, m in existing.items():
                 if mid in matched_ids or m["type"] == MonitorType.GROUP:
                     continue
-                m_name = m["name"]
-                if any(m_name.lower() == a.lower() for a in mon.get("aliases", [])):
+                m_name = m["name"].strip()
+                # 1. 完全一致
+                if m_name.lower() == target_name.lower():
                     match = m
                     break
+                # 2. 基本名匹配（如旧名称 'HoneyWell' 匹配 'HoneyWell (192.168.50.193)'）
+                if base_name and (m_name.lower() == base_name.lower() or m_name.lower().startswith(base_name.lower() + " ")):
+                    match = m
+                    break
+                # 3. 别名兼容（'路由器' 匹配 'ASUS TUF Gaming BE6500'，'QNAP' 匹配 'QNAP TS-453Bmini'）
+                if (m_name in ["路由器", "QNAP", "HA 主机"]) and (base_name and m_name in base_name):
+                    match = m
+                    break
+                # 4. IP 与类型一致
                 if mon.get("hostname") and m.get("hostname") == mon.get("hostname") and m["type"] == TYPE_MAP[mon["type"]]:
                     match = m
                     break
+                # 5. URL 一致
                 if mon.get("url") and m.get("url") == mon.get("url"):
                     match = m
                     break
